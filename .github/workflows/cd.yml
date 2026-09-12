@@ -34,24 +34,10 @@ jobs:
 
   deploy:
     needs: build-e-push
-    runs-on: ubuntu-latest
+    # roda no runner self-hosted (a própria EC2), deploy local sem SSH público
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Instala o Ansible e as collections
-        run: |
-          pip install ansible
-          ansible-galaxy collection install community.docker ansible.posix
-
-      - name: Escreve a chave .pem no runner
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/korp.pem
-          chmod 600 ~/.ssh/korp.pem
 
       - name: Gera os segredos (.env e .htpasswd) a partir dos secrets
         run: |
@@ -60,13 +46,11 @@ jobs:
           HASH=$(openssl passwd -apr1 "${{ secrets.PROMETHEUS_PASSWORD }}")
           echo "prom:$HASH" > nginx/.htpasswd
 
-      - name: Escreve o inventory apontando pro host
+      - name: Escreve o inventory (deploy local)
         run: |
           echo "[all]" > ansible/inventory.ini
-          echo "korp-server ansible_host=${{ secrets.HOST_IP }} ansible_user=${{ secrets.HOST_USER }} ansible_ssh_private_key_file=~/.ssh/korp.pem" >> ansible/inventory.ini
+          echo "korp-server ansible_connection=local ansible_python_interpreter=/usr/bin/python3" >> ansible/inventory.ini
 
       - name: Sobe o ambiente no servidor
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
         working-directory: ansible
-        run: ansible-playbook -i inventory.ini playbook.yml
+        run: sudo ansible-playbook -i inventory.ini playbook.yml
