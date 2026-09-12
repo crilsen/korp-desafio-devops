@@ -90,6 +90,28 @@ ansible-playbook -i ansible/inventory.producao.ini ansible/playbook.yml \
 - App: `GET /projeto-korp` → `{"nome":"Projeto Korp","horario":"<UTC>"}`
 - Métricas: `/metrics` (formato Prometheus)
 
+## Logs (Loki + Promtail)
+
+A pilha de logs é centralizada no **Loki** e coletada pelo **Promtail**:
+
+- **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB em
+  filesystem, modo single-binary). Recebe os logs via API push na porta `3100`.
+- **Promtail** (`grafana/promtail:3.6.11`) — agente que descobre os containers via
+  `docker_sd` (socket do Docker) e envia os logs pro Loki, adicionando o label
+  `container`.
+- **Serviço Go** — registra cada requisição (`GET /projeto-korp <duração>`) via
+  middleware, que sai no stdout e vira log no Docker.
+- **Grafana** — datasource Loki provisionado (`uid: loki`) e painel
+  **"Logs do serviço"** no dashboard, consultando
+  `{container=~"http-server-projeto-korp|nginx"}`.
+
+Com isso o Grafana fecha a tríade de observabilidade: **métricas** (Prometheus) +
+**logs** (Loki) num só lugar.
+
+> **Nota:** o Promtail entrou em modo de manutenção — o substituto oficial da
+> Grafana Labs é o **Alloy** (antigo Grafana Agent). Usei Promtail por simplicidade
+> e familiaridade, mas trocar pelo Alloy é uma evolução natural.
+
 ## Notas
 
 - Segredos (senha do Grafana, basic auth do Prometheus, chaves, IPs reais) **não**
