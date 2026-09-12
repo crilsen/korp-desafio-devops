@@ -1,0 +1,100 @@
+services:
+  http-server-projeto-korp:
+    build:
+      context: ./http-server
+    container_name: http-server-projeto-korp
+    # sem "ports" de propósito: o serviço só é acessível pela rede interna
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.30.2-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      - http-server-projeto-korp
+      - grafana
+      - prometheus
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  # coleta métricas do host (CPU, memória, disco) e expõe pro Prometheus
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host/rootfs'
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      # senha vem do .env (gitignored), nada de credencial hardcoded
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      # URL pública do Grafana, pra redirecionamentos e links saírem certos atrás do proxy
+      - GF_SERVER_ROOT_URL=https://korp-grafana.cristianon.com
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  # agregação de logs (o Promtail envia e o Grafana consulta)
+  loki:
+    image: grafana/loki:3.7.7
+    container_name: loki
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+  # coleta logs dos containers e envia pro Loki
+  promtail:
+    image: grafana/promtail:3.6.11
+    container_name: promtail
+    volumes:
+      - ./monitoring/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - korp-net
+    restart: unless-stopped
+
+networks:
+  korp-net:
+    driver: bridge
+
+volumes:
+  loki-data:

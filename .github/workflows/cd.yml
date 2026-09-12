@@ -1,0 +1,72 @@
+name: CD
+
+# publica a imagem no GHCR e faz o deploy via Ansible quando algo entra na main
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/http-server-projeto-korp
+
+jobs:
+  build-e-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e push da imagem (tag = sha curto)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./http-server
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    needs: build-e-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instala o Ansible e as collections
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.docker ansible.posix
+
+      - name: Escreve a chave .pem no runner
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/korp.pem
+          chmod 600 ~/.ssh/korp.pem
+
+      - name: Gera os segredos (.env e .htpasswd) a partir dos secrets
+        run: |
+          echo "GRAFANA_ADMIN_USER=admin" > .env
+          echo "GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" >> .env
+          HASH=$(openssl passwd -apr1 "${{ secrets.PROMETHEUS_PASSWORD }}")
+          echo "prom:$HASH" > nginx/.htpasswd
+
+      - name: Escreve o inventory apontando pro host
+        run: |
+          echo "[all]" > ansible/inventory.ini
+          echo "korp-server ansible_host=${{ secrets.HOST_IP }} ansible_user=${{ secrets.HOST_USER }} ansible_ssh_private_key_file=~/.ssh/korp.pem" >> ansible/inventory.ini
+
+      - name: Sobe o ambiente no servidor
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        working-directory: ansible
+        run: ansible-playbook -i inventory.ini playbook.yml

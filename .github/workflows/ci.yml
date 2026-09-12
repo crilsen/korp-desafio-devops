@@ -1,0 +1,61 @@
+name: CI
+
+# roda em todo pull request e push, pra barrar código quebrado antes do merge
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  # valida o código Go e o build da imagem
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+          cache-dependency-path: http-server/go.sum
+
+      - name: Baixa as dependências
+        working-directory: http-server
+        run: go mod download
+
+      - name: Verifica o código (go vet)
+        working-directory: http-server
+        run: go vet ./...
+
+      - name: Roda os testes
+        working-directory: http-server
+        run: go test ./...
+
+      - name: Valida o docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Constrói a imagem do serviço
+        run: docker build -t http-server-projeto-korp ./http-server
+
+  # checa a sintaxe do playbook e do inventory
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instala o Ansible e o ansible-lint
+        run: pip install ansible ansible-lint
+
+      - name: Instala as collections usadas no playbook
+        run: ansible-galaxy collection install community.docker ansible.posix
+
+      - name: Checa a sintaxe do playbook
+        working-directory: ansible
+        run: ansible-playbook playbook.yml --syntax-check
+
+      - name: Lint do playbook
+        working-directory: ansible
+        run: ansible-lint playbook.yml

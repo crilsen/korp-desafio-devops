@@ -1,0 +1,25 @@
+# arquivos de inventário com dados reais (IP, usuário, chave) não sobem pro repo
+ansible/inventory.producao.ini
+
+# chaves privadas
+*.pem
+*.key
+
+# isos e arquivos grandes baixados acidentalmente no repo
+*.iso
+
+# secrets: senha do grafana e hash do basic auth do prometheus
+.env
+nginx/.htpasswd
+
+# docs pessoais (checklist, guia de entrevista e o PDF do desafio) — não sobem pro repo
+docs/
+
+# binários e artefatos locais
+http-server/http-server
+
+# terraform: estado, cache do provider e tfvars com dados reais
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/terraform.tfvars

@@ -1,0 +1,106 @@
+---
+# Provisiona o ambiente inteiro com um único comando:
+#   ansible-playbook -i inventory.ini playbook.yml
+
+- name: Provisiona o ambiente do desafio Korp
+  hosts: all
+  become: true
+
+  vars:
+    # caminho no servidor onde o projeto vai morar
+    projeto_dir: "/opt/korp-desafio-devops"
+
+  tasks:
+    - name: Atualiza o cache de pacotes
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Instala dependências básicas (ca-certificates, curl, gnupg, rsync)
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - rsync
+        state: present
+
+    - name: Baixa a chave GPG do Docker pro diretório de keyrings
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Adiciona o repositório oficial do Docker
+      ansible.builtin.deb822_repository:
+        name: docker
+        types: [deb]
+        uris: https://download.docker.com/linux/ubuntu
+        suites: "{{ ansible_distribution_release }}"
+        components: [stable]
+        signed_by: /etc/apt/keyrings/docker.asc
+        state: present
+
+    - name: Instala o Docker Engine e o plugin do Compose
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Garante que o serviço do Docker está ativo
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Cria a pasta do projeto no servidor
+      ansible.builtin.file:
+        path: "{{ projeto_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Sincroniza os arquivos do projeto para o servidor (rsync)
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../"
+        dest: "{{ projeto_dir }}/"
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=*.pem"
+          - "--exclude=*.iso"
+          - "--exclude=*.pdf"
+          - "--exclude=.github"
+          - "--exclude=ansible/inventory.producao.ini"
+        delete: false
+
+    - name: Cria a rede Docker no modo bridge
+      community.docker.docker_network:
+        name: korp-net
+        driver: bridge
+        state: present
+
+    - name: Sobe o ambiente com docker compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ projeto_dir }}"
+        state: present
+        build: always
+        recreate: always
+
+    - name: Aguarda o NGINX ficar disponível
+      ansible.builtin.wait_for:
+        host: localhost
+        port: 80
+        timeout: 60
+
+    - name: Valida o serviço com uma requisição HTTP
+      ansible.builtin.uri:
+        url: http://localhost:80/projeto-korp
+        return_content: true
+      register: resposta
+
+    - name: Exibe a resposta do serviço no console
+      ansible.builtin.debug:
+        msg: "Resposta do serviço: {{ resposta.content }}"
