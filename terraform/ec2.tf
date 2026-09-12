@@ -22,7 +22,7 @@ resource "aws_instance" "korp" {
   tags = { Name = "${var.prefixo}-ec2" }
 }
 
-# EIP já existente (100.25.78.212), reaproveitando
+# EIP já existente, reaproveitando (IP definido em terraform.tfvars)
 data "aws_eip" "korp" {
   public_ip = var.eip_public_ip
 }

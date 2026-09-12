@@ -18,6 +18,10 @@ docs/
 # binários e artefatos locais
 http-server/http-server
 
+# arquivos de sistema do macOS
+.DS_Store
+**/.DS_Store
+
 # terraform: estado, cache do provider e tfvars com dados reais
 terraform/.terraform/
 terraform/*.tfstate

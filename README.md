@@ -71,12 +71,12 @@ curl http://localhost:80/projeto-korp
 
 ```bash
 cd terraform
-cp terraform.tfvars.example terraform.tfvars   # está em placeholderts
+cp terraform.tfvars.example terraform.tfvars   # está em placeholderts, substitua conforme necessário
 terraform init
 terraform apply
 ```
 
-### 3. Provisionamento completo (Ansible)
+### 3. Provisionamento completo dentro do SO (Ansible)
 
 ```bash
 ansible-playbook -i ansible/inventory.producao.ini ansible/playbook.yml \
