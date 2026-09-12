@@ -55,3 +55,26 @@ variable "cloudflare_cidrs" {
   description = "Faixas de IP do Cloudflare (https://www.cloudflare.com/ips/)"
   type        = list(string)
 }
+
+variable "github_repo" {
+  description = "Repositório (owner/nome) pra registrar o runner self-hosted"
+  type        = string
+}
+
+variable "github_pat" {
+  description = "Personal Access Token (escopo repo) usado no bootstrap do runner"
+  type        = string
+  sensitive   = true
+}
+
+variable "runner_name" {
+  description = "Nome do runner self-hosted"
+  type        = string
+  default     = "korp-runner"
+}
+
+variable "runner_version" {
+  description = "Versão do runner do GitHub Actions"
+  type        = string
+  default     = "2.337.0"
+}

@@ -12,6 +12,9 @@ key_name      = "korp-pem"
 ssh_cidr      = "SEU_IP/32"
 eip_public_ip = "IP_ELASTICO_EXISTENTE"
 
+github_repo = "SEU_USER/SEU_REPO"
+github_pat  = "ghp_XXXXXXXXXXXXXXX"
+
 cloudflare_cidrs = [
   "103.21.244.0/22",
   "103.22.200.0/22",
