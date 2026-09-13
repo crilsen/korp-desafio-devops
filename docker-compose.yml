@@ -94,15 +94,17 @@ services:
       - korp-net
     restart: unless-stopped
 
-  # coleta logs dos containers e envia pro Loki
-  promtail:
-    image: grafana/promtail:3.6.11
-    container_name: promtail
+  # coleta logs dos containers e envia para o Loki.
+  alloy:
+    image: grafana/alloy:v1.12.1
+    container_name: alloy
     volumes:
-      - ./monitoring/promtail/promtail.yml:/etc/promtail/config.yml:ro
-      - promtail-positions:/var/lib/promtail
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy
     command:
-      - -config.file=/etc/promtail/config.yml
+      - run
+      - --storage.path=/var/lib/alloy
+      - /etc/alloy/config.alloy
     depends_on:
       - loki
       - docker-socket-proxy
@@ -116,4 +118,4 @@ networks:
 
 volumes:
   loki-data:
-  promtail-positions:
+  alloy-data:

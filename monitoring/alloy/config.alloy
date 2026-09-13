@@ -2,7 +2,7 @@
 // Substituto do Promtail (que entrou em modo manutenção).
 
 discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
+  host = "tcp://docker-socket-proxy:2375"
 }
 
 discovery.relabel "containers" {
@@ -17,7 +17,7 @@ discovery.relabel "containers" {
 }
 
 loki.source.docker "default" {
-  host       = "unix:///var/run/docker.sock"
+  host       = "tcp://docker-socket-proxy:2375"
   targets    = discovery.relabel.containers.output
   forward_to = [loki.write.default.receiver]
 }

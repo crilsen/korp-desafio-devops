@@ -88,6 +88,7 @@
         state: present
         build: always
         recreate: always
+        remove_orphans: true
 
     - name: Aguarda o NGINX ficar disponível
       ansible.builtin.wait_for:

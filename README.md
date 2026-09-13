@@ -20,7 +20,7 @@ forma automatizada com Ansible e Terraform.
                                    │ rede interna (bridge)
         ┌──────────────┬───────────┼───────────┬──────────────────┐
         │              │           │           │                  │
-   http-server    prometheus    grafana     loki             promtail
+   http-server    prometheus    grafana     loki              alloy
    (Go, :8080)    (:9090)      (:3000)     (:3100)          (logs -> loki)
                                    │
                               node-exporter
@@ -35,7 +35,7 @@ forma automatizada com Ansible e Terraform.
 | **NGINX** | Proxy reverso, roteia por `server_name` na porta 80 |
 | **Prometheus** | Coleta de métricas (serviço + host via node-exporter) |
 | **Grafana** | Dashboards provisionados por arquivo |
-| **Loki + Promtail** | Agregação e coleta de logs dos containers, via proxy com API Docker limitada |
+| **Loki + Alloy** | Agregação e coleta de logs dos containers, via proxy com API Docker limitada |
 | **Ansible** | Provisiona o ambiente inteiro com um único comando |
 | **Terraform** | IaC: VPC, subnet, RT, SG, key pair, EC2 e EIP |
 | **GitHub Actions** | CI (teste/build) e CD (deploy) |
@@ -90,16 +90,16 @@ ansible-playbook -i ansible/inventory.producao.ini ansible/playbook.yml \
 - App: `GET /projeto-korp` → `{"nome":"Projeto Korp","horario":"<UTC>"}`
 - Métricas: `/metrics` (formato Prometheus)
 
-## Logs (Loki + Promtail)
+## Logs (Loki + Alloy)
 
-A pilha de logs é centralizada no **Loki** e coletada pelo **Promtail**:
+A pilha de logs é centralizada no **Loki** e coletada pelo **Alloy**:
 
 - **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB no
   S3 `cn-korp-loki-logs-us-east-1`, modo single-binary). Recebe os logs via API push
   na porta `3100`; a role da EC2 permite esse acesso sem chaves estáticas.
-- **Promtail** (`grafana/promtail:3.6.11`) — agente que descobre os containers por um
+- **Alloy** (`grafana/alloy:v1.12.1`) — agente que descobre os containers por um
   proxy com permissões Docker limitadas e envia os logs pro Loki, adicionando o label
-  `container`. O cursor de leitura é persistido no volume `promtail-positions`.
+  `container`. O cursor de leitura é persistido no volume `alloy-data`.
 - **Serviço Go** — registra cada requisição (`GET /projeto-korp <duração>`) via
   middleware, que sai no stdout e vira log no Docker.
 - **Grafana** — datasource Loki provisionado (`uid: loki`) e painel
@@ -109,9 +109,7 @@ A pilha de logs é centralizada no **Loki** e coletada pelo **Promtail**:
 Com isso o Grafana fecha a tríade de observabilidade: **métricas** (Prometheus) +
 **logs** (Loki) num só lugar.
 
-> **Nota:** o Promtail entrou em modo de manutenção — o substituto oficial da
-> Grafana Labs é o **Alloy** (antigo Grafana Agent). Usei Promtail por simplicidade
-> e familiaridade, mas trocar pelo Alloy é uma evolução natural.
+> **Nota:** o Alloy é o coletor ativo e substitui o Promtail, que está em modo de manutenção.
 
 ## Notas
 
