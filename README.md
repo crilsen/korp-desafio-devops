@@ -1,4 +1,4 @@
-# korp-desafio-devops 
+# korp-desafio-devops
 
 Desafio DevOps: serviço HTTP em Go empacotado em container, exposto atrás de um
 proxy reverso NGINX, monitorado com Prometheus + Grafana + Loki e provisionado de
