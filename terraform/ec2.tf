@@ -15,6 +15,7 @@ resource "aws_instance" "korp" {
     runner_version                     = var.runner_version
     bootstrap_runner_script            = file("${path.module}/../scripts/bootstrap-runner.sh")
   })
+  user_data_replace_on_change = true
 
   root_block_device {
     volume_size = 20

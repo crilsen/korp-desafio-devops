@@ -52,7 +52,7 @@ chown -R "${RUNNER_USER}:${RUNNER_USER}" "/home/${RUNNER_USER}/actions-runner"
 
 echo "==> registrando o runner"
 su - "${RUNNER_USER}" -c \
-  "cd /home/${RUNNER_USER}/actions-runner && ./config.sh --url https://github.com/${GITHUB_REPO} --token ${REG_TOKEN} --name ${RUNNER_NAME} --labels self-hosted --unattended --work _work"
+  "cd /home/${RUNNER_USER}/actions-runner && ./config.sh --url https://github.com/${GITHUB_REPO} --token ${REG_TOKEN} --name ${RUNNER_NAME} --labels self-hosted --unattended --replace --work _work"
 
 echo "==> instalando como serviço e iniciando"
 cd "/home/${RUNNER_USER}/actions-runner"
