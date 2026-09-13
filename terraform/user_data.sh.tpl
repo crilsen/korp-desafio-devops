@@ -3,8 +3,13 @@
 set -euo pipefail
 
 export GITHUB_REPO="${github_repo}"
-export GITHUB_PAT="${github_pat}"
+export GITHUB_TOKEN_PARAMETER_NAME="${github_runner_token_parameter_name}"
 export RUNNER_NAME="${runner_name}"
 export RUNNER_VERSION="${runner_version}"
 
-curl -sL "https://raw.githubusercontent.com/${github_repo}/main/scripts/bootstrap-runner.sh" | bash
+install -d -m 0755 /usr/local/lib/korp
+cat > /usr/local/lib/korp/bootstrap-runner.sh <<'BOOTSTRAP'
+${bootstrap_runner_script}
+BOOTSTRAP
+chmod 0700 /usr/local/lib/korp/bootstrap-runner.sh
+/usr/local/lib/korp/bootstrap-runner.sh

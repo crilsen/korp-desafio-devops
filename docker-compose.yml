@@ -77,17 +77,35 @@ services:
       - korp-net
     restart: unless-stopped
 
+  # expõe ao coletor somente a API Docker de leitura necessária para descobrir logs.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: docker-socket-proxy
+    environment:
+      CONTAINERS: 1
+      EVENTS: 1
+      INFO: 1
+      NETWORKS: 1
+      POST: 0
+      VERSION: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - korp-net
+    restart: unless-stopped
+
   # coleta logs dos containers e envia pro Loki
   promtail:
     image: grafana/promtail:3.6.11
     container_name: promtail
     volumes:
       - ./monitoring/promtail/promtail.yml:/etc/promtail/config.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/var/lib/promtail
     command:
       - -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+      - docker-socket-proxy
     networks:
       - korp-net
     restart: unless-stopped
@@ -98,3 +116,4 @@ networks:
 
 volumes:
   loki-data:
+  promtail-positions:

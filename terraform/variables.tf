@@ -61,11 +61,22 @@ variable "github_repo" {
   type        = string
 }
 
-variable "github_pat" {
-  description = "Personal Access Token (escopo repo) usado no bootstrap do runner"
+variable "github_runner_token_parameter_name" {
+  description = "Nome do parâmetro SecureString no SSM que contém o token de registro do runner"
   type        = string
-  sensitive   = true
 }
+
+variable "github_runner_token_parameter_arn" {
+  description = "ARN do parâmetro SecureString no SSM que contém o token de registro do runner"
+  type        = string
+}
+
+variable "loki_s3_bucket" {
+  description = "Bucket S3 existente usado pelo Loki para persistir chunks e índices"
+  type        = string
+  default     = "cn-korp-loki-logs-us-east-1"
+}
+
 
 variable "runner_name" {
   description = "Nome do runner self-hosted"

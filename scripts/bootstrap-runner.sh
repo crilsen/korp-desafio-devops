@@ -5,7 +5,7 @@
 #
 # Configuração via variáveis de ambiente:
 #   GITHUB_REPO     (default: crilsen/korp-desafio-devops)
-#   GITHUB_PAT      (obrigatório — token com escopo repo/workflow)
+#   GITHUB_TOKEN_PARAMETER_NAME (obrigatório — SecureString do SSM com token de escopo repo/workflow)
 #   RUNNER_NAME     (default: korp-runner)
 #   RUNNER_VERSION  (default: 2.337.0)
 #   RUNNER_USER     (default: ubuntu)
@@ -17,16 +17,16 @@ RUNNER_NAME="${RUNNER_NAME:-korp-runner}"
 RUNNER_VERSION="${RUNNER_VERSION:-2.337.0}"
 RUNNER_USER="${RUNNER_USER:-ubuntu}"
 
-if [ -z "${GITHUB_PAT:-}" ]; then
-  echo "ERRO: defina a variável GITHUB_PAT" >&2
+if [ -z "${GITHUB_TOKEN_PARAMETER_NAME:-}" ]; then
+  echo "ERRO: defina a variável GITHUB_TOKEN_PARAMETER_NAME" >&2
   exit 1
 fi
 
 export DEBIAN_FRONTEND=noninteractive
 
-echo "==> instalando dependências (ansible, docker-py, rsync)"
+echo "==> instalando dependências (ansible, docker-py, rsync, awscli)"
 apt-get update -y
-apt-get install -y ansible-core python3-docker rsync curl
+apt-get install -y ansible-core python3-docker rsync curl awscli
 
 echo "==> instalando collections do Ansible"
 ansible-galaxy collection install community.docker ansible.posix
@@ -40,11 +40,13 @@ tar xzf runner.tar.gz
 rm -f runner.tar.gz
 
 echo "==> pegando token de registro"
+GITHUB_PAT=$(aws ssm get-parameter --name "${GITHUB_TOKEN_PARAMETER_NAME}" --with-decryption --query 'Parameter.Value' --output text)
 REG_TOKEN=$(curl -s -X POST \
   -H "Authorization: token ${GITHUB_PAT}" \
   -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/${GITHUB_REPO}/actions/runners/registration-token" \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])')
+unset GITHUB_PAT
 
 chown -R "${RUNNER_USER}:${RUNNER_USER}" "/home/${RUNNER_USER}/actions-runner"
 

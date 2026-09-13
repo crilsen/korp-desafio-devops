@@ -8,12 +8,14 @@ subnet_cidr   = "10.101.1.0/24"
 az            = "us-east-1f"
 instance_type = "t3.small"
 ami_id        = "ami-XXXXXXXXXXXXXXX"
-key_name      = "korp-pem"
+key_name      = "korp-aws-pem"
 ssh_cidr      = "SEU_IP/32"
 eip_public_ip = "IP_ELASTICO_EXISTENTE"
 
 github_repo = "SEU_USER/SEU_REPO"
-github_pat  = "ghp_XXXXXXXXXXXXXXX"
+github_runner_token_parameter_name = "/korp/github-runner-token"
+github_runner_token_parameter_arn  = "arn:aws:ssm:us-east-1:123456789012:parameter/korp/github-runner-token"
+loki_s3_bucket                    = "cn-korp-loki-logs-us-east-1"
 
 cloudflare_cidrs = [
   "103.21.244.0/22",

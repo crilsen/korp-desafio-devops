@@ -55,6 +55,12 @@ func comLog(next http.Handler) http.Handler {
 
 // projetoKorp responde o endpoint principal, montando o horário na hora da chamada.
 func projetoKorp(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
 	requisicoesTotais.WithLabelValues(r.URL.Path).Inc()
 
 	// usa UTC pra não depender do fuso de quem está rodando
@@ -79,7 +85,16 @@ func main() {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	log.Println("subindo o serviço na porta 8080")
-	if err := http.ListenAndServe(":8080", comLog(mux)); err != nil {
+	servidor := &http.Server{
+		Addr:              ":8080",
+		Handler:           comLog(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	if err := servidor.ListenAndServe(); err != nil {
 		log.Fatalf("falha ao iniciar o servidor: %v", err)
 	}
 }

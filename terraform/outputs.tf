@@ -15,13 +15,9 @@ output "private_ip" {
 
 output "key_name" {
   description = "Nome do par de chaves"
-  value       = aws_key_pair.korp.key_name
+  value       = data.aws_key_pair.korp.key_name
 }
 
-output "pem_local" {
-  description = "Caminho local da chave privada gerada"
-  value       = local_file.korp_pem.filename
-}
 
 output "vpc_id" {
   value = aws_vpc.korp.id
@@ -37,9 +33,4 @@ output "security_group_id" {
 
 output "route_table_id" {
   value = aws_route_table.korp.id
-}
-
-output "ssh_comando" {
-  description = "Como conectar na instância depois do deploy"
-  value       = "ssh -i ${local_file.korp_pem.filename} ubuntu@${data.aws_eip.korp.public_ip}"
 }

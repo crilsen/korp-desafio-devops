@@ -35,7 +35,7 @@ forma automatizada com Ansible e Terraform.
 | **NGINX** | Proxy reverso, roteia por `server_name` na porta 80 |
 | **Prometheus** | Coleta de métricas (serviço + host via node-exporter) |
 | **Grafana** | Dashboards provisionados por arquivo |
-| **Loki + Promtail** | Agregação e coleta de logs dos containers |
+| **Loki + Promtail** | Agregação e coleta de logs dos containers, via proxy com API Docker limitada |
 | **Ansible** | Provisiona o ambiente inteiro com um único comando |
 | **Terraform** | IaC: VPC, subnet, RT, SG, key pair, EC2 e EIP |
 | **GitHub Actions** | CI (teste/build) e CD (deploy) |
@@ -94,11 +94,12 @@ ansible-playbook -i ansible/inventory.producao.ini ansible/playbook.yml \
 
 A pilha de logs é centralizada no **Loki** e coletada pelo **Promtail**:
 
-- **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB em
-  filesystem, modo single-binary). Recebe os logs via API push na porta `3100`.
-- **Promtail** (`grafana/promtail:3.6.11`) — agente que descobre os containers via
-  `docker_sd` (socket do Docker) e envia os logs pro Loki, adicionando o label
-  `container`.
+- **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB no
+  S3 `cn-korp-loki-logs-us-east-1`, modo single-binary). Recebe os logs via API push
+  na porta `3100`; a role da EC2 permite esse acesso sem chaves estáticas.
+- **Promtail** (`grafana/promtail:3.6.11`) — agente que descobre os containers por um
+  proxy com permissões Docker limitadas e envia os logs pro Loki, adicionando o label
+  `container`. O cursor de leitura é persistido no volume `promtail-positions`.
 - **Serviço Go** — registra cada requisição (`GET /projeto-korp <duração>`) via
   middleware, que sai no stdout e vira log no Docker.
 - **Grafana** — datasource Loki provisionado (`uid: loki`) e painel
@@ -119,3 +120,6 @@ Com isso o Grafana fecha a tríade de observabilidade: **métricas** (Prometheus
   (`.env`, `*.pem`, `terraform.tfvars`, etc.).
 - O dashboard e o datasource do Grafana são provisionados automaticamente por
   arquivo, sem configuração manual.
+- O token do runner self-hosted deve ficar em um parâmetro **SecureString** no AWS SSM.
+  O Terraform recebe somente o nome e o ARN do parâmetro; a instância o lê com uma role
+  de menor privilégio durante o bootstrap.
