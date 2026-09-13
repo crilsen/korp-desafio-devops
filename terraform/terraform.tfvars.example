@@ -15,7 +15,7 @@ eip_public_ip = "IP_ELASTICO_EXISTENTE"
 github_repo = "SEU_USER/SEU_REPO"
 github_runner_token_parameter_name = "/korp/github-runner-token"
 github_runner_token_parameter_arn  = "arn:aws:ssm:us-east-1:123456789012:parameter/korp/github-runner-token"
-loki_s3_bucket                    = "cn-korp-loki-logs-us-east-1"
+loki_s3_bucket                    = "Loki-bucket"
 
 cloudflare_cidrs = [
   "103.21.244.0/22",
