@@ -79,9 +79,15 @@ scripts/         instalação de dependências
 ```bash
 cp .env.example .env
 # Edite .env: defina uma senha forte e os hosts públicos do ambiente.
+# Gere o arquivo de Basic Auth do Prometheus (informe uma senha no prompt):
+HASH="$(openssl passwd -apr1)"
+printf 'prom:%s\n' "$HASH" > nginx/.htpasswd
 docker compose up -d --build
 curl http://localhost:80/projeto-korp
 ```
+
+O arquivo `nginx/.htpasswd.example` mostra o formato esperado. Nunca use a senha de
+exemplo nem envie o arquivo `nginx/.htpasswd` ao Git.
 
 ### 2. Infra na AWS (Terraform)
 
@@ -135,6 +141,16 @@ usada como alternativa em um fluxo de deploy baseado em `image:` no Docker Compo
 Para o CD, configure no repositório os secrets `GRAFANA_ADMIN_PASSWORD` e
 `PROMETHEUS_PASSWORD`. O token de registro do runner permanece no AWS SSM Parameter
 Store como `SecureString`, acessado pela role da EC2.
+
+### Credenciais por ambiente
+
+| Serviço | Desenvolvimento local | CD na AWS |
+|---|---|---|
+| Grafana | `GRAFANA_ADMIN_PASSWORD` no `.env` (modelo em `.env.example`) | GitHub Secret `GRAFANA_ADMIN_PASSWORD` |
+| Prometheus | hash Apache em `nginx/.htpasswd` (modelo em `nginx/.htpasswd.example`) | GitHub Secret `PROMETHEUS_PASSWORD`, convertido em hash pelo workflow |
+
+O usuário do Grafana vem de `GRAFANA_ADMIN_USER` (padrão: `admin`) e o usuário do
+Basic Auth do Prometheus é `prom`.
 
 ### Hosts por ambiente
 
