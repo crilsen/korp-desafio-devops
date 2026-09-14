@@ -78,7 +78,7 @@ scripts/         instalação de dependências
 
 ```bash
 cp .env.example .env
-# Edite .env e defina uma senha forte para o Grafana.
+# Edite .env: defina uma senha forte e os hosts públicos do ambiente.
 docker compose up -d --build
 curl http://localhost:80/projeto-korp
 ```
@@ -136,10 +136,31 @@ Para o CD, configure no repositório os secrets `GRAFANA_ADMIN_PASSWORD` e
 `PROMETHEUS_PASSWORD`. O token de registro do runner permanece no AWS SSM Parameter
 Store como `SecureString`, acessado pela role da EC2.
 
+### Hosts por ambiente
+
+Os hosts públicos não ficam fixos nas configurações do NGINX. Defina as variáveis
+abaixo no `.env` (ou no ambiente que executa o Compose); a imagem oficial do NGINX
+renderiza os templates em `nginx/templates/` no início do container.
+
+```env
+KORP_APP_HOST=korp-app.example.com
+KORP_GRAFANA_HOST=korp-grafana.example.com
+KORP_PROMETHEUS_HOST=korp-prometheus.example.com
+```
+
+Os valores acima são exemplos. Em produção, use os domínios reais e mantenha o DNS
+ou proxy de borda apontando para a instância.
+
 ## Endpoints
 
-- App: `GET /projeto-korp` → `{"nome":"Projeto Korp","horario":"<UTC>"}`
-- Métricas: `/metrics` (formato Prometheus)
+| Serviço | Endereço |
+|---|---|
+| Aplicação | [https://korp-app.example.com/projeto-korp](https://korp-app.example.com/projeto-korp) |
+| Grafana | [https://korp-grafana.example.com](https://korp-grafana.example.com) |
+| Prometheus | [https://korp-prometheus.example.com](https://korp-prometheus.example.com) |
+
+- A aplicação responde `GET /projeto-korp` com `{"nome":"Projeto Korp","horario":"<UTC>"}`.
+- As métricas da aplicação estão disponíveis em `/metrics`, no formato Prometheus.
 
 ## Logs (Loki + Alloy)
 

@@ -6,6 +6,9 @@ inventory.producao.ini
 *.pem
 *.key
 
+# configurações locais de ambiente
+*.conf
+
 # isos e arquivos grandes baixados acidentalmente no repo
 *.iso
 
