@@ -11,18 +11,18 @@ variable "prefixo" {
   type        = string
 }
 
-variable "vpc_cidr" {
-  description = "CIDR da VPC"
+variable "vpc_id" {
+  description = "ID da VPC existente onde a instância e o security group serão criados"
   type        = string
 }
 
 variable "subnet_cidr" {
-  description = "CIDR da subnet pública"
+  description = "CIDR da subnet pública que será criada na VPC existente"
   type        = string
 }
 
 variable "az" {
-  description = "Availability Zone da subnet"
+  description = "Availability Zone da subnet pública"
   type        = string
 }
 

@@ -2,7 +2,7 @@
 resource "aws_security_group" "korp" {
   name        = "${var.prefixo}-sg"
   description = "SG do desafio Korp"
-  vpc_id      = aws_vpc.korp.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "Cloudflare na porta 80 (proxied)"

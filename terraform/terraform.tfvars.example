@@ -3,9 +3,9 @@
 
 region        = "us-east-1"
 prefixo       = "korp"
-vpc_cidr      = "10.101.0.0/16"
-subnet_cidr   = "10.101.1.0/24"
-az            = "us-east-1f"
+vpc_id         = "vpc-08ecc531f9309bab4"
+subnet_cidr    = "10.101.1.0/24"
+az             = "us-east-1f"
 instance_type = "t3.small"
 ami_id        = "ami-XXXXXXXXXXXXXXX"
 key_name      = "korp-aws-pem"

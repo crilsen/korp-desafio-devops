@@ -37,7 +37,7 @@ forma automatizada com Ansible e Terraform.
 | **Grafana** | Dashboards provisionados por arquivo |
 | **Loki + Alloy** | Agregação e coleta de logs dos containers, via proxy com API Docker limitada |
 | **Ansible** | Provisiona o ambiente inteiro com um único comando |
-| **Terraform** | IaC: VPC, subnet, RT, SG, key pair, EC2 e EIP |
+| **Terraform** | IaC: subnet, rota, SG, key pair, EC2 e EIP em VPC existente |
 | **GitHub Actions** | CI (teste/build) e CD (deploy) |
 
 ## Estrutura
@@ -47,7 +47,7 @@ http-server/     serviço Go + Dockerfile (multi-stage)
 nginx/           configs do proxy reverso
 monitoring/      prometheus.yml, loki, promtail, grafana (provisioning + dashboard)
 ansible/         playbook + inventário
-terraform/       VPC, subnet, rt, sg, ec2, keypair, eip
+terraform/       subnet, rota, SG, EC2, keypair e EIP; usa VPC existente
 scripts/         instalação de dependências
 .github/         CI/CD
 ```
@@ -63,6 +63,8 @@ scripts/         instalação de dependências
 ### 1. Local (só o ambiente)
 
 ```bash
+cp .env.example .env
+# Edite .env e defina uma senha forte para o Grafana.
 docker compose up -d --build
 curl http://localhost:80/projeto-korp
 ```
@@ -71,10 +73,14 @@ curl http://localhost:80/projeto-korp
 
 ```bash
 cd terraform
-cp terraform.tfvars.example terraform.tfvars   # está em placeholderts, substitua conforme necessário
+cp terraform.tfvars.example terraform.tfvars   # substitua os placeholders conforme necessário
 terraform init
 terraform apply
 ```
+
+Informe somente o `vpc_id` de uma VPC existente no `terraform.tfvars`. O Terraform
+cria a subnet pública e sua tabela de rotas nessa VPC, usando o Internet Gateway já
+associado a ela; ele não cria nem altera a VPC ou o Internet Gateway.
 
 ### 3. Provisionamento completo dentro do SO (Ansible)
 
@@ -115,7 +121,11 @@ Com isso o Grafana fecha a tríade de observabilidade: **métricas** (Prometheus
 
 - Segredos (senha do Grafana, basic auth do Prometheus, chaves, IPs reais) **não**
   vão pro repositório — ficam em arquivos ignorados pelo `.gitignore`
-  (`.env`, `*.pem`, `terraform.tfvars`, etc.).
+  (`.env`, `*.pem`, `*.tfvars`, inventários de produção, etc.). Use
+  `.env.example` como modelo e nunca envie o `.env` preenchido.
+- Os dados operacionais do Grafana e do Prometheus persistem nos volumes
+  `grafana-data` e `prometheus-data`; as configurações e dashboards continuam
+  versionados nos diretórios `monitoring/` e `nginx/`.
 - O dashboard e o datasource do Grafana são provisionados automaticamente por
   arquivo, sem configuração manual.
 - O token do runner self-hosted deve ficar em um parâmetro **SecureString** no AWS SSM.

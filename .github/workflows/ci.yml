@@ -31,6 +31,8 @@ jobs:
         run: go test ./...
 
       - name: Valida o docker-compose.yml
+        env:
+          GRAFANA_ADMIN_PASSWORD: ci-validation-only
         run: docker compose config --quiet
 
       - name: Constrói a imagem do serviço

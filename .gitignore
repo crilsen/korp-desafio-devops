@@ -1,5 +1,6 @@
 # arquivos de inventário com dados reais (IP, usuário, chave) não sobem pro repo
 ansible/inventory.producao.ini
+inventory.producao.ini
 
 # chaves privadas
 *.pem
@@ -24,6 +25,6 @@ http-server/http-server
 
 # terraform: estado, cache do provider e tfvars com dados reais
 terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/terraform.tfvars
+*.tfstate
+*.tfstate.backup
+*.tfvars

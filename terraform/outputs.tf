@@ -20,11 +20,13 @@ output "key_name" {
 
 
 output "vpc_id" {
-  value = aws_vpc.korp.id
+  description = "ID da VPC existente usada pela infraestrutura"
+  value       = var.vpc_id
 }
 
 output "subnet_id" {
-  value = aws_subnet.korp.id
+  description = "ID da subnet criada na VPC existente"
+  value       = aws_subnet.korp.id
 }
 
 output "security_group_id" {
