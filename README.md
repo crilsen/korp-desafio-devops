@@ -182,9 +182,9 @@ ou proxy de borda apontando para a instância.
 
 A pilha de logs é centralizada no **Loki** e coletada pelo **Alloy**:
 
-- **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB no
-  S3 `cn-korp-loki-logs-us-east-1`, modo single-binary). Recebe os logs via API push
-  na porta `3100`; a role da EC2 permite esse acesso sem chaves estáticas.
+- **Loki** (`grafana/loki:3.7.7`) — agregação e armazenamento dos logs (TSDB em
+  bucket S3 configurável, modo single-binary). Recebe os logs via API push na porta
+  `3100`; a role da EC2 permite esse acesso sem chaves estáticas.
 - **Alloy** (`grafana/alloy:v1.12.1`) — agente que descobre os containers por um
   proxy com permissões Docker limitadas e envia os logs pro Loki, adicionando o label
   `container`. O cursor de leitura é persistido no volume `alloy-data`.
